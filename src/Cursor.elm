@@ -1,7 +1,5 @@
 module Cursor exposing (Cursor, back, current, forward, fromList, length, nonEmpty, toList, withSelectedElement)
 
-
-
 {-| Data structure to efficiently navigate a list forward or backward.
 
 It stores a non-empty list as two lists and one element that is currently "selected".
@@ -13,6 +11,10 @@ Finally, focusing on the third element is: `Cursor [2, 1] 3 []`.
 **Note that the left part of the list is stored in reverse order!**
 
 -}
+
+import Html.Attributes exposing (list)
+
+
 type Cursor a
     = Cursor (List a) a (List a)
 
@@ -35,9 +37,13 @@ nonEmpty x xs =
 
 -}
 fromList : List a -> Maybe (Cursor a)
-fromList _ =
-    -- Nothing
-    Debug.todo "fromList"
+fromList list =
+    case list of
+        [] ->
+            Nothing
+
+        x :: xs ->
+            Just (nonEmpty x xs)
 
 
 {-| Convert the `Cursor` to a `List`
@@ -46,9 +52,8 @@ fromList _ =
 
 -}
 toList : Cursor a -> List a
-toList _ =
-    -- []
-    Debug.todo "toList"
+toList (Cursor start focus end) =
+    start ++ focus :: end
 
 
 {-| Get the current element from the cursor
@@ -77,26 +82,33 @@ If the cursor would go past the last element, the function should return `Nothin
 
 -}
 forward : Cursor a -> Maybe (Cursor a)
-forward _ =
-    -- Nothing
-    Debug.todo "forward"
+forward (Cursor start focus end) =
+    case end of
+        [] ->
+            Nothing
+
+        x :: xs ->
+            Just (Cursor (focus :: start) x xs)
 
 
 {-| Move the cursor backward.
 
 If the cursor would go before the first element, the function should return `Nothing`.
+back (nonEmpty 1 [ 2, 3 ]) --> Nothing
 
-    back (nonEmpty 1 [ 2, 3 ]) --> Nothing
+        back (nonEmpty 1 []) --> Nothing
 
-    back (nonEmpty 1 []) --> Nothing
-
-    nonEmpty 1 [ 2, 3 ] |> forward |> Maybe.andThen back --> Just (withSelectedElement [] 1 [2, 3])
+        nonEmpty 1 [ 2, 3 ] |> forward |> Maybe.andThen back --> Just (withSelectedElement [] 1 [2, 3])
 
 -}
 back : Cursor a -> Maybe (Cursor a)
-back _ =
-    -- Nothing
-    Debug.todo "back"
+back (Cursor start focus end) =
+    case start of
+        [] ->
+            Nothing
+
+        x :: xs ->
+            Just (Cursor xs x (focus :: end))
 
 
 {-| Get the number of elements
@@ -107,6 +119,5 @@ back _ =
 
 -}
 length : Cursor a -> Int
-length _ =
-    -- 0
-    Debug.todo "length"
+length (Cursor start focus end) =
+    List.length start + List.length end + 1
