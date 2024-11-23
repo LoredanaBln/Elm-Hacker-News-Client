@@ -1,11 +1,11 @@
 module View.Posts exposing (..)
 
-import Html exposing (Html, div, text)
-import Html.Attributes exposing (href)
+import Html exposing (Html, a, div, p, table, tbody, td, text, th, thead, tr)
+import Html.Attributes exposing (class, href)
 import Html.Events
 import Model exposing (Msg(..))
 import Model.Post exposing (Post)
-import Model.PostsConfig exposing (Change(..), PostsConfig, SortBy(..), filterPosts, sortFromString, sortOptions, sortToCompareFn, sortToString)
+import Model.PostsConfig exposing (Change(..), PostsConfig, SortBy(..), defaultConfig, filterPosts, sortFromString, sortOptions, sortToCompareFn, sortToString)
 import Time
 import Util.Time
 
@@ -28,9 +28,42 @@ Relevant library functions:
 
 -}
 postTable : PostsConfig -> Time.Posix -> List Post -> Html Msg
-postTable _ _ _ =
-    -- div [] []
-    Debug.todo "postTable"
+postTable config currentTime posts =
+    let
+        filteredPosts =
+            filterPosts config posts
+    in
+    table []
+        [ thead []
+            [ tr []
+                [ th [] [ text "Score" ]
+                , th [] [ text "Title" ]
+                , th [] [ text "Type" ]
+                , th [] [ text "Posted Date" ]
+                , th [] [ text "Link" ]
+                ]
+            ]
+        , tbody []
+            (List.map (\post -> postRow currentTime post) filteredPosts)
+        ]
+
+
+postRow : Time.Posix -> Post -> Html Msg
+postRow currentTime post =
+    tr []
+        [ td [ class "post-score" ] [ text (String.fromInt post.score) ]
+        , td [ class "post-title" ] [ text post.title ]
+        , td [ class "post-type" ] [ text post.type_ ]
+        , td [ class "post-time" ] [ text (Util.Time.formatTime Time.utc currentTime) ]
+        , td [ class "post-url" ]
+            [ case post.url of
+                Just url ->
+                    text url
+
+                Nothing ->
+                    text "No URL"
+            ]
+        ]
 
 
 {-| Show the configuration options for the posts table
