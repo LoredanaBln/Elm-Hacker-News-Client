@@ -1,5 +1,6 @@
 module Util.Time exposing (..)
 
+import String exposing (join)
 import Time
 
 
@@ -139,9 +140,28 @@ durationBetween (Time.millisToPosix 1000) (Time.millisToPosix 1000) --> Nothing
 
 -}
 durationBetween : Time.Posix -> Time.Posix -> Maybe Duration
-durationBetween _ _ =
-    -- Nothing
-    Debug.todo "durationBetween"
+durationBetween start end =
+    let
+        timeInMilis =
+            Time.posixToMillis end - Time.posixToMillis start
+
+        days =
+            timeInMilis // (24 * 60 * 60 * 1000)
+
+        hours =
+            Basics.modBy (24 * 60 * 60 * 1000) timeInMilis // (60 * 60 * 1000)
+
+        minutes =
+            Basics.modBy (60 * 60 * 1000) timeInMilis // (60 * 1000)
+
+        seconds =
+            Basics.modBy (60 * 1000) timeInMilis // 1000
+    in
+    if timeInMilis <= 0 then
+        Nothing
+
+    else
+        Just (Duration seconds minutes hours days)
 
 
 {-| Format a `Duration` as a human readable string
@@ -164,6 +184,17 @@ durationBetween _ _ =
 
 -}
 formatDuration : Duration -> String
-formatDuration _ =
-    -- ""
-    Debug.todo "formatDuration"
+formatDuration { seconds, minutes, hours, days } =
+    let
+        append value unit =
+            case value of
+                0 ->
+                    ""
+
+                1 ->
+                    String.fromInt value ++ " " ++ unit ++ " "
+
+                _ ->
+                    String.fromInt value ++ " " ++ unit ++ "s "
+    in
+    append days "day" ++ append hours "hour" ++ append minutes "minute" ++ append seconds "second" ++ "ago"
