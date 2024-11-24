@@ -134,7 +134,7 @@ filterPosts : PostsConfig -> List Post -> List Post
 filterPosts config posts =
     posts
         |> List.take config.postsToFetch
-        |> List.take config.postsToShow
         |> List.filter (\post -> config.showJobs || post.type_ /= "job")
         |> List.filter (\post -> config.showTextOnly || post.url /= Nothing)
+        |> List.take config.postsToShow
         |> List.sortWith (sortToCompareFn config.sortBy)

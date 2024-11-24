@@ -8,7 +8,7 @@ import Html.Attributes exposing (href, type_)
 import Model exposing (AppState(..), Config, LoadingPostsState, Mode(..), Model, Msg(..))
 import Model.Post as Post
 import Model.PostIds as PostIds exposing (HackerNewsItem(..))
-import Model.PostsConfig
+import Model.PostsConfig exposing (applyChanges)
 import View.Posts exposing (postTable, postsConfigView)
 
 
@@ -86,7 +86,9 @@ update msg model =
         ( newState, cmd ) =
             case ( model.state, msg ) of
                 ( Model.Empty { config }, GotTime time ) ->
-                    ( Model.Loading { config = config, time = time }, getTopPostIds model.config.apiUrl )
+                    ( Model.Loading { config = config, time = time }
+                    , getTopPostIds model.config.apiUrl
+                    )
 
                 ( Model.Loading { config, time }, GotPostIds result ) ->
                     case result of
@@ -148,8 +150,11 @@ update msg model =
                             ( Model.FailedToLoad err, Effect.NoEffect )
 
                 ( Model.LoadedPosts state, ConfigChanged change ) ->
-                    -- ( Model.LoadedPosts state, Effect.NoEffect )
-                    ( Debug.todo "update the config in the update function", Effect.NoEffect )
+                    let
+                        newConfig =
+                            applyChanges change state.config
+                    in
+                    ( Model.LoadedPosts { state | config = newConfig }, Effect.NoEffect )
 
                 ( state, _ ) ->
                     ( state, Effect.NoEffect )

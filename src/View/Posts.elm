@@ -1,6 +1,6 @@
 module View.Posts exposing (..)
 
-import Html exposing (Html, a, div, p, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, a, div, label, p, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (class, href)
 import Html.Events
 import Model exposing (Msg(..))
@@ -44,17 +44,21 @@ postTable config currentTime posts =
                 ]
             ]
         , tbody []
-            (List.map (\post -> postRow currentTime post) filteredPosts)
+            (List.map (postRow currentTime) filteredPosts)
         ]
 
 
 postRow : Time.Posix -> Post -> Html Msg
 postRow currentTime post =
+    let
+        duration =
+            Util.Time.durationBetween post.time currentTime |> Maybe.withDefault { seconds = 0, minutes = 0, hours = 0, days = 0 }
+    in
     tr []
         [ td [ class "post-score" ] [ text (String.fromInt post.score) ]
         , td [ class "post-title" ] [ text post.title ]
         , td [ class "post-type" ] [ text post.type_ ]
-        , td [ class "post-time" ] [ text (Util.Time.formatTime Time.utc currentTime) ]
+        , td [ class "post-time" ] [ text (Util.Time.formatTime Time.utc post.time ++ " (" ++ Util.Time.formatDuration duration ++ ")") ]
         , td [ class "post-url" ]
             [ case post.url of
                 Just url ->
@@ -81,6 +85,54 @@ Relevant functions:
 
 -}
 postsConfigView : PostsConfig -> Html Msg
-postsConfigView _ =
-    -- div [] []
-    Debug.todo "postsConfigView"
+postsConfigView config =
+    div []
+        [ div []
+            [ label [ Html.Attributes.for "select-posts-per-page" ] [ text "Posts per page:" ]
+            , Html.select
+                [ Html.Attributes.id "select-posts-per-page"
+                , Html.Events.onInput (\value -> ConfigChanged (ChangePostsToShow (String.toInt value |> Maybe.withDefault 10)))
+                ]
+                [ Html.option [ Html.Attributes.value "10", Html.Attributes.selected (config.postsToShow == 10) ] [ text "10" ]
+                , Html.option [ Html.Attributes.value "25", Html.Attributes.selected (config.postsToShow == 25) ] [ text "25" ]
+                , Html.option [ Html.Attributes.value "50", Html.Attributes.selected (config.postsToShow == 50) ] [ text "50" ]
+                ]
+            ]
+        , div []
+            [ label [ Html.Attributes.for "select-sort-by" ] [ text "Sort by:" ]
+            , Html.select
+                [ Html.Attributes.id "select-sort-by"
+                , Html.Events.onInput (sortFromString >> Maybe.map (ChangeSortBy >> ConfigChanged) >> Maybe.withDefault (ConfigChanged (ChangeSortBy None)))
+                ]
+                (List.map
+                    (\sortOption ->
+                        Html.option
+                            [ Html.Attributes.value (sortToString sortOption)
+                            , Html.Attributes.selected (config.sortBy == sortOption)
+                            ]
+                            [ text (sortToString sortOption) ]
+                    )
+                    sortOptions
+                )
+            ]
+        , div []
+            [ label [ Html.Attributes.for "checkbox-show-job-posts" ] [ text "Show job posts:" ]
+            , Html.input
+                [ Html.Attributes.id "checkbox-show-job-posts"
+                , Html.Attributes.type_ "checkbox"
+                , Html.Attributes.checked config.showJobs
+                , Html.Events.onCheck (ConfigChanged << ChangeShowJobs)
+                ]
+                []
+            ]
+        , div []
+            [ label [ Html.Attributes.for "checkbox-show-text-only-posts" ] [ text "Show text-only posts:" ]
+            , Html.input
+                [ Html.Attributes.id "checkbox-show-text-only-posts"
+                , Html.Attributes.type_ "checkbox"
+                , Html.Attributes.checked config.showTextOnly
+                , Html.Events.onCheck (ConfigChanged << ChangeShowTextOnly)
+                ]
+                []
+            ]
+        ]
